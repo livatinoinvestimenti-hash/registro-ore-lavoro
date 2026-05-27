@@ -1,0 +1,21 @@
+{
+  "name": "Registro Ore Lavoro",
+  "short_name": "Ore Lavoro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#3b82f6",
+  "description": "App per tracciare le ore di lavoro, straordinari e ferie.",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestione Ore Lavoro</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        info: '#3b82f6',
+                        danger: '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .day-cell { min-height: 75px; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen pb-12">
+
+    <div class="max-w-md mx-auto px-4 pt-4">
+        <!-- Navigazione Schede -->
+        <div class="flex bg-white rounded-xl shadow-sm overflow-hidden mb-5 border border-gray-200">
+            <button id="btn-inserisci" onclick="cambiaScheda('inserisci')" class="flex-1 py-4 text-center font-semibold text-base transition-colors bg-blue-600 text-white">
+                Inserisci Dati
+            </button>
+            <button id="btn-riassunto" onclick="cambiaScheda('riassunto')" class="flex-1 py-4 text-center font-semibold text-base transition-colors text-gray-600 hover:bg-gray-50">
+                Riassunto
+            </button>
+        </div>
+
+        <!-- SCHEDA 1: INSERIMENTO -->
+        <div id="view-inserisci" class="block bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+            <!-- Controlli Mese -->
+            <div class="flex justify-between items-center mb-4">
+                <button onclick="cambiaMese(-1)" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-bold text-lg w-10 h-10 flex items-center justify-center text-gray-600">&larr;</button>
+                <span id="mese-corrente-label" class="text-lg font-bold text-gray-700"></span>
+                <button onclick="cambiaMese(1)" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-bold text-lg w-10 h-10 flex items-center justify-center text-gray-600">&rarr;</button>
+            </div>
+            
+            <p class="text-xs text-gray-400 text-center mb-4">Seleziona uno o più giorni dal calendario</p>
+            
+            <!-- Intestazione Settimana -->
+            <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 mb-1">
+                <div>LU</div><div>MA</div><div>ME</div><div>GI</div><div>VE</div><div>SA</div><div>DO</div>
+            </div>
+
+            <!-- Griglia Calendario -->
+            <div id="calendario" class="grid grid-cols-7 gap-1 mb-5"></div>
+
+            <!-- Campi di Inserimento -->
+            <div class="space-y-4 border-t border-gray-100 pt-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Ore Lavorate (🟢)</label>
+                    <input type="number" id="ore-lavorate" min="0" step="0.5" placeholder="Es. 8" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Ore Straordinario (🟠)</label>
+                    <input type="number" id="ore-straordinario" min="0" step="0.5" placeholder="Es. 2" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Ore Ferie (🔵)</label>
+                    <input type="number" id="ore-ferie" min="0" step="0.5" placeholder="Es. 8" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
+                </div>
+
+                <!-- Pulsanti Azione -->
+                <div class="pt-2 space-y-2">
+                    <button onclick="salvaDati()" class="w-full py-4 bg-emerald-500 text-white font-bold rounded-xl shadow-md hover:bg-emerald-600 transition-colors text-base">
+                        Salva Dati per i giorni scelty
+                    </button>
+                    <button onclick="pulisciDati()" class="w-full py-3 bg-red-500 text-white font-semibold rounded-xl shadow-sm hover:bg-red-600 transition-colors text-sm">
+                        Pulisci Giorni Selezionati
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCHEDA 2: RIASSUNTO -->
+        <div id="view-riassunto" class="hidden bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Seleziona Mese</label>
+                    <select id="sel-mese" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-base">
+                        <option value="0">Gennaio</option><option value="1">Febbraio</option>
+                        <option value="2">Marzo</option><option value="3">Aprile</option>
+                        <option value="4">Maggio</option><option value="5">Giugno</option>
+                        <option value="6">Luglio</option><option value="7">Agosto</option>
+                        <option value="8">Settembre</option><option value="9">Ottobre</option>
+                        <option value="10">Novembre</option><option value="11">Dicembre</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Seleziona Anno</label>
+                    <input type="number" id="sel-anno" class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base">
+                </div>
+
+                <button onclick="calcolaRiassunto()" class="w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 transition-colors text-base">
+                    Genera Riassunto
+                </button>
+
+                <!-- Risultati Riepilogo -->
+                <div id="box-risultati" class="hidden mt-6 p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+                    <h3 class="text-base font-bold text-gray-700 border-b border-gray-200 pb-2 mb-2">Totale del Mese</h3>
+                    <div class="flex justify-between items-center text-base">
+                        <span class="font-medium text-gray-600 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Ore Lavorate:
+                        </span>
+                        <span id="tot-lavorate" class="font-bold text-emerald-600 text-lg">0 h</span>
+                    </div>
+                    <div class="flex justify-between items-center text-base">
+                        <span class="font-medium text-gray-600 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-amber-500"></span> Straordinari:
+                        </span>
+                        <span id="tot-straordinario" class="font-bold text-amber-600 text-lg">0 h</span>
+                    </div>
+                    <div class="flex justify-between items-center text-base">
+                        <span class="font-medium text-gray-600 flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-blue-500"></span> Ore Ferie:
+                        </span>
+                        <span id="tot-ferie" class="font-bold text-blue-600 text-lg">0 h</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifiche Toast -->
+    <div id="toast-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        let dataVisualizzata = new Date();
+        let giorniSelezionati = new Set();
+
+        function mostraNotifica(testo, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl shadow-lg text-white font-medium text-sm transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2`;
+            
+            if (tipo === 'success') toast.classList.add('bg-emerald-500');
+            else if (tipo === 'danger') toast.classList.add('bg-red-500');
+            else toast.classList.add('bg-blue-600');
+            
+            toast.innerText = testo;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        function cambiaScheda(scheda) {
+            const btnIns = document.getElementById('btn-inserisci');
+            const btnRia = document.getElementById('btn-riassunto');
+            const viewIns = document.getElementById('view-inserisci');
+            const viewRia = document.getElementById('view-riassunto');
+            
+            if (scheda === 'inserisci') {
+                viewIns.classList.remove('hidden'); viewIns.classList.add('block');
+                viewRia.classList.remove('block'); viewRia.classList.add('hidden');
+                btnIns.className = "flex-1 py-4 text-center font-semibold text-base transition-colors bg-blue-600 text-white";
+                btnRia.className = "flex-1 py-4 text-center font-semibold text-base transition-colors text-gray-600 hover:bg-gray-50";
+            } else {
+                viewIns.classList.remove('block'); viewIns.classList.add('hidden');
+                viewRia.classList.remove('hidden'); viewRia.classList.add('block');
+                btnRia.className = "flex-1 py-4 text-center font-semibold text-base transition-colors bg-blue-600 text-white";
+                btnIns.className = "flex-1 py-4 text-center font-semibold text-base transition-colors text-gray-600 hover:bg-gray-50";
+                
+                document.getElementById('sel-mese').value = new Date().getMonth();
+                document.getElementById('sel-anno').value = new Date().getFullYear();
+                document.getElementById('box-risultati').classList.add('hidden');
+            }
+        }
+
+        function disegnaCalendario() {
+            const griglia = document.getElementById('calendario');
+            griglia.innerHTML = '';
+            
+            const anno = dataVisualizzata.getFullYear();
+            const mese = dataVisualizzata.getMonth();
+            const nomiMesi = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+            
+            document.getElementById('mese-corrente-label').innerText = nomiMesi[mese] + ' ' + anno;
+
+            let primoGiornoSettimana = new Date(anno, mese, 1).getDay();
+            primoGiornoSettimana = primoGiornoSettimana === 0 ? 6 : primoGiornoSettimana - 1;
+
+            const giorniNelMese = new Date(anno, mese + 1, 0).getDate();
+            
+            for (let e = 0; e < primoGiornoSettimana; e++) {
+                const vuoto = document.createElement('div');
+                griglia.appendChild(vuoto);
+            }
+            
+            for (let i = 1; i <= giorniNelMese; i++) {
+                const giornoDiv = document.createElement('div');
+                giornoDiv.className = 'day-cell p-1 border border-gray-100 rounded-lg bg-gray-50 flex flex-col justify-between items-center cursor-pointer transition-all select-none hover:bg-gray-100 text-xs relative';
+                
+                const stringaData = `${anno}-${String(mese + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                
+                const numeroGiorno = document.createElement('span');
+                numeroGiorno.className = 'font-bold text-gray-700 w-6 h-6 flex items-center justify-center rounded-full';
+                numeroGiorno.innerText = i;
+                giornoDiv.appendChild(numeroGiorno);
+
+                const infoContainer = document.createElement('div');
+                infoContainer.className = 'w-full flex flex-col gap-0.5 mt-1 text-[10px] scale-90 origin-bottom';
+                
+                const datiSalvati = localStorage.getItem('dati_lavoro_' + stringaData);
+                if (datiSalvati) {
+                    const obj = JSON.parse(datiSalvati);
+                    if (obj.lavorate > 0) {
+                        infoContainer.innerHTML += `<div class="text-emerald-600 font-medium truncate text-center">🟢${obj.lavorate}h</div>`;
+                    }
+                    if (obj.straordinario > 0) {
+                        infoContainer.innerHTML += `<div class="text-amber-600 font-medium truncate text-center">🟠${obj.straordinario}h</div>`;
+                    }
+                    if (obj.ferie > 0) {
+                        infoContainer.innerHTML += `<div class="text-blue-600 font-medium truncate text-center">🔵${obj.ferie}h</div>`;
+                    }
+                }
+                giornoDiv.appendChild(infoContainer);
+                
+                if (giorniSelezionati.has(stringaData)) {
+                    giornoDiv.classList.add('bg-blue-50', 'border-blue-400', 'ring-2', 'ring-blue-400', 'ring-opacity-50');
+                    numeroGiorno.classList.add('bg-blue-600', 'text-white');
+                }
+
+                giornoDiv.onclick = () => {
+                    if (giorniSelezionati.has(stringaData)) {
+                        giorniSelezionati.delete(stringaData);
+                        giornoDiv.classList.remove('bg-blue-50', 'border-blue-400', 'ring-2', 'ring-blue-400', 'ring-opacity-50');
+                        numeroGiorno.classList.remove('bg-blue-600', 'text-white');
+                    } else {
+                        giorniSelezionati.add(stringaData);
+                        giornoDiv.classList.add('bg-blue-50', 'border-blue-400', 'ring-2', 'ring-blue-400', 'ring-opacity-50');
+                        numeroGiorno.classList.add('bg-blue-600', 'text-white');
+                    }
+                };
+                griglia.appendChild(giornoDiv);
+            }
+        }
+
+        function cambiaMese(direzione) {
+            dataVisualizzata.setMonth(dataVisualizzata.getMonth() + direzione);
+            giorniSelezionati.clear();
+            disegnaCalendario();
+        }
+
+        function salvaDati() {
+            if (giorniSelezionati.size === 0) {
+                mostraNotifica("Seleziona almeno un giorno sul calendario!", "danger");
+                return;
+            }
+
+            const lav = parseFloat(document.getElementById('ore-lavorate').value) || 0;
+            const str = parseFloat(document.getElementById('ore-straordinario').value) || 0;
+            const fer = parseFloat(document.getElementById('ore-ferie').value) || 0;
+
+            const datiGiorno = { lavorate: lav, straordinario: str, ferie: fer };
+
+            giorniSelezionati.forEach(data => {
+                if (lav === 0 && str === 0 && fer === 0) {
+                    localStorage.removeItem('dati_lavoro_' + data);
+                } else {
+                    localStorage.setItem('dati_lavoro_' + data, JSON.stringify(datiGiorno));
+                }
+            });
+
+            mostraNotifica(`Dati salvati con successo per ${giorniSelezionati.size} giorni!`, "success");
+            
+            document.getElementById('ore-lavorate').value = '';
+            document.getElementById('ore-straordinario').value = '';
+            document.getElementById('ore-ferie').value = '';
+            giorniSelezionati.clear();
+            disegnaCalendario();
+        }
+
+        function pulisciDati() {
+            if (giorniSelezionati.size === 0) {
+                mostraNotifica("Seleziona i giorni che desideri ripulire!", "danger");
+                return;
+            }
+
+            giorniSelezionati.forEach(data => {
+                localStorage.removeItem('dati_lavoro_' + data);
+            });
+
+            mostraNotifica(`Cancellati i dati di ${giorniSelezionati.size} giorni.`, "danger");
+            giorniSelezionati.clear();
+            disegnaCalendario();
+        }
+
+        function calcolaRiassunto() {
+            const mese = parseInt(document.getElementById('sel-mese').value);
+            const anno = parseInt(document.getElementById('sel-anno').value);
+            
+            let totLavorate = 0, totStraordinario = 0, totFerie = 0;
+            const giorniNelMese = new Date(anno, mese + 1, 0).getDate();
+
+            for (let i = 1; i <= giorniNelMese; i++) {
+                const stringaData = `${anno}-${String(mese + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                const datiSalvati = localStorage.getItem('dati_lavoro_' + stringaData);
+                
+                if (datiSalvati) {
+                    const obj = JSON.parse(datiSalvati);
+                    totLavorate += obj.lavorate || 0;
+                    totStraordinario += obj.straordinario || 0;
+                    totFerie += obj.ferie || 0;
+                }
+            }
+
+            document.getElementById('tot-lavorate').innerText = totLavorate + " h";
+            document.getElementById('tot-straordinario').innerText = totStraordinario + " h";
+            document.getElementById('tot-ferie').innerText = totFerie + " h";
+            document.getElementById('box-risultati').classList.remove('hidden');
+            mostraNotifica("Riassunto calcolato con successo!", "success");
+        }
+
+        disegnaCalendario();
+    </script>
+</body>
+</html>
